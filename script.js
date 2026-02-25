@@ -461,9 +461,47 @@ function createHotspots(api, key) {
 }
 
 // ─── Keyboard Shortcuts ──────────────────────────────
+// ─── Zoom Helpers ────────────────────────────────────
+function zoomIn() {
+    const api = apiCache[currentModel];
+    if (!api) { showToast('Model still loading...', 'fa-spinner'); return; }
+    currentFov = Math.max(5, currentFov - 8);
+    api.setFov(currentFov, (err, angle) => { 
+        if (!err) showToast('Zoom In — FOV ' + Math.round(angle) + '°', 'fa-search-plus'); 
+    });
+}
+
+function zoomOut() {
+    const api = apiCache[currentModel];
+    if (!api) { showToast('Model still loading...', 'fa-spinner'); return; }
+    currentFov = Math.min(120, currentFov + 8);
+    api.setFov(currentFov, (err, angle) => { 
+        if (!err) showToast('Zoom Out — FOV ' + Math.round(angle) + '°', 'fa-search-minus'); 
+    });
+}
+
+function navigateModel(direction) {
+    const idx = SWITCHABLE_MODELS.indexOf(currentModel);
+    if (idx === -1) return;
+    const newIdx = (idx + direction + SWITCHABLE_MODELS.length) % SWITCHABLE_MODELS.length;
+    switchModel(SWITCHABLE_MODELS[newIdx]);
+}
+
+function toggleView() {
+    if (currentView === 'exterior') {
+        document.getElementById('btn-interior')?.click();
+    } else {
+        document.getElementById('btn-exterior')?.click();
+    }
+}
+
+function toggleShortcutsModal() {
+    document.getElementById('shortcuts-modal-overlay')?.classList.toggle('open');
+}
+
+// ─── Keyboard Shortcuts ──────────────────────────────
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-        // Don't capture when typing in inputs
         if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
         const viewerVisible = document.getElementById('viewer-section')?.style.display !== 'none';
@@ -493,11 +531,11 @@ function setupKeyboardShortcuts() {
                 break;
             case '+': case '=':
                 if (!viewerVisible) return;
-                document.getElementById('zoom-in-btn')?.click();
+                zoomIn();
                 break;
             case '-': case '_':
                 if (!viewerVisible) return;
-                document.getElementById('zoom-out-btn')?.click();
+                zoomOut();
                 break;
             case 's': case 'S':
                 if (!viewerVisible) return;
@@ -519,37 +557,16 @@ function setupKeyboardShortcuts() {
     });
 }
 
-function navigateModel(direction) {
-    const idx = SWITCHABLE_MODELS.indexOf(currentModel);
-    if (idx === -1) return;
-    const newIdx = (idx + direction + SWITCHABLE_MODELS.length) % SWITCHABLE_MODELS.length;
-    switchModel(SWITCHABLE_MODELS[newIdx]);
-}
-
-function toggleView() {
-    if (currentView === 'exterior') {
-        document.getElementById('btn-interior')?.click();
-    } else {
-        document.getElementById('btn-exterior')?.click();
-    }
-}
-
-function toggleShortcutsModal() {
-    document.getElementById('shortcuts-modal-overlay')?.classList.toggle('open');
-}
-
 // ─── UI / HUD ────────────────────────────────────────
 function setupUI() {
     buildModelsPage();
     buildFullSpecs();
     updateHUD('nexon');
 
-    // Model selector cards
     document.querySelectorAll('.model-card').forEach(card => {
         card.addEventListener('click', () => switchModel(card.dataset.model));
     });
 
-    // View buttons
     document.getElementById('btn-exterior')?.addEventListener('click', () => {
         document.getElementById('btn-exterior').classList.add('active');
         document.getElementById('btn-interior').classList.remove('active');
@@ -564,7 +581,6 @@ function setupUI() {
         setView('interior');
     });
 
-    // Reset Camera
     document.getElementById('reset-cam-btn')?.addEventListener('click', () => {
         const api = apiCache[currentModel];
         if (api) {
@@ -580,7 +596,6 @@ function setupUI() {
         resetViewToggle();
     });
 
-    // Auto-Rotate
     document.getElementById('auto-rotate-btn')?.addEventListener('click', () => {
         const api = apiCache[currentModel];
         if (!api) { showToast('Model still loading...', 'fa-spinner'); return; }
@@ -591,21 +606,9 @@ function setupUI() {
         else { showToast('Auto-rotate OFF', 'fa-stop'); cancelAnimationFrame(autoRotateRAF); }
     });
 
-    // Zoom
-    document.getElementById('zoom-in-btn')?.addEventListener('click', () => {
-        const api = apiCache[currentModel];
-        if (!api) { showToast('Model still loading...', 'fa-spinner'); return; }
-        currentFov = Math.max(5, currentFov - 8);
-        api.setFov(currentFov, function(err, angle) { if (!err) showToast('Zoom In — FOV ' + Math.round(angle) + '°', 'fa-search-plus'); });
-    });
-    document.getElementById('zoom-out-btn')?.addEventListener('click', () => {
-        const api = apiCache[currentModel];
-        if (!api) { showToast('Model still loading...', 'fa-spinner'); return; }
-        currentFov = Math.min(120, currentFov + 8);
-        api.setFov(currentFov, function(err, angle) { if (!err) showToast('Zoom Out — FOV ' + Math.round(angle) + '°', 'fa-search-minus'); });
-    });
-
-    // Screenshot
+    // Zoom and Screenshot (listeners preserved for potential future UI restoration)
+    document.getElementById('zoom-in-btn')?.addEventListener('click', zoomIn);
+    document.getElementById('zoom-out-btn')?.addEventListener('click', zoomOut);
     document.getElementById('screenshot-btn')?.addEventListener('click', takeScreenshot);
 
     // Color swatches — FUNCTIONAL color change
