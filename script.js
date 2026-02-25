@@ -272,17 +272,40 @@ function init() {
     setupKeyboardShortcuts();
 }
 
+function syncIframeVisibility() {
+    const key = currentModel;
+    Object.keys(iframeCache).forEach(k => {
+        const ifr = iframeCache[k];
+        if (ifr) {
+            if (k === key) {
+                ifr.style.display = 'block';
+                ifr.style.opacity = '1';
+                ifr.style.zIndex = '1';
+                ifr.style.top = '-45px';
+                ifr.style.pointerEvents = 'auto';
+                if (apiCache[k] && apiCache[k].resume) apiCache[k].resume();
+                activeIframe = ifr;
+            } else {
+                ifr.style.display = 'none';
+                ifr.style.opacity = '0';
+                ifr.style.zIndex = '0';
+                ifr.style.pointerEvents = 'none';
+                if (apiCache[k]) apiCache[k].pause();
+            }
+        }
+    });
+}
+
 function loadModel(key, isActive) {
     const data = CAR_DATA[key];
     const container = document.getElementById('viewer-3d-container');
 
     const iframe = document.createElement('iframe');
     iframe.id = `api-frame-${key}`;
-    iframe.style.cssText = `width:100%; height:calc(100% + 45px); border:none; position:absolute; top:-45px; left:0; transition: opacity 0.5s; opacity:${isActive?1:0}; z-index:${isActive?1:0}; pointer-events:${isActive?'auto':'none'};`;
+    iframe.style.cssText = `width:100%; height:calc(100% + 45px); border:none; position:absolute; top:-45px; left:0; transition: opacity 0.5s; opacity:0; z-index:0; pointer-events:none; display:none;`;
     container.appendChild(iframe);
 
     iframeCache[key] = iframe;
-    if (isActive) activeIframe = iframe;
 
     const client = new Sketchfab(iframe);
     client.init(data.sketchfabId, {
@@ -290,43 +313,29 @@ function loadModel(key, isActive) {
             api.start();
             api.addEventListener('viewerready', () => {
                 apiCache[key] = api;
-                if (isActive) {
-                    currentModel = key;
+                
+                // If this is the model we are WAITING for, show it now
+                if (key === currentModel) {
                     updateHUD(key);
                     createHotspots(api, key);
                     updateLoadingBar(100, 'Ready!');
-
+                    
                     const overlay = document.getElementById('loading-overlay');
                     if (overlay && !overlay.classList.contains('hidden')) {
                         setTimeout(() => {
                             overlay.classList.add('hidden');
                             document.getElementById('app-shell')?.classList.add('visible');
                         }, 500);
-                    } else {
-                        Object.keys(iframeCache).forEach(k => {
-                            if (iframeCache[k]) {
-                                if (k === key) {
-                                    iframeCache[k].style.display = 'block';
-                                    iframeCache[k].style.opacity = '1';
-                                    iframeCache[k].style.zIndex = '1';
-                                    iframeCache[k].style.top = '-45px';
-                                    iframeCache[k].style.pointerEvents = 'auto';
-                                } else {
-                                    iframeCache[k].style.display = 'none';
-                                    iframeCache[k].style.opacity = '0';
-                                    iframeCache[k].style.zIndex = '0';
-                                    iframeCache[k].style.pointerEvents = 'none';
-                                }
-                            }
-                        });
-                        hideTransitionOverlay();
-                        showToast(`${CAR_DATA[key].name} loaded`, 'fa-check');
                     }
+                    
+                    syncIframeVisibility();
+                    hideTransitionOverlay();
+                    showToast(`${CAR_DATA[key].name} ready`, 'fa-check');
                 }
             });
         },
         error: () => {
-            if (isActive) {
+            if (key === currentModel) {
                 document.getElementById('loading-overlay')?.classList.add('hidden');
                 document.getElementById('app-shell')?.classList.add('visible');
                 hideTransitionOverlay();
@@ -360,11 +369,6 @@ function switchModel(key) {
 
     showTransitionOverlay(CAR_DATA[key]?.name || key);
 
-    if (!iframeCache[key]) {
-        loadModel(key, true);
-        return;
-    }
-
     const oldKey = currentModel;
     currentModel = key;
 
@@ -376,29 +380,17 @@ function switchModel(key) {
     }
     currentFov = 45;
 
-    // Robust Sync: Hide everything and only show the target
-    Object.keys(iframeCache).forEach(k => {
-        const ifr = iframeCache[k];
-        if (ifr) {
-            if (k === key) {
-                ifr.style.display = 'block';
-                ifr.style.opacity = '1';
-                ifr.style.zIndex = '1';
-                ifr.style.top = '-45px';
-                ifr.style.pointerEvents = 'auto';
-                if (apiCache[k] && apiCache[k].resume) apiCache[k].resume();
-                activeIframe = ifr;
-            } else {
-                ifr.style.display = 'none';
-                ifr.style.opacity = '0';
-                ifr.style.zIndex = '0';
-                ifr.style.pointerEvents = 'none';
-                if (apiCache[k]) apiCache[k].pause();
-            }
+    if (!iframeCache[key]) {
+        loadModel(key, true);
+    } else {
+        syncIframeVisibility();
+        updateHUD(key);
+        // Hide overlay after brief delay to allow rendering
+        setTimeout(() => hideTransitionOverlay(), 800);
+        if (apiCache[key]) {
+            showToast(`${CAR_DATA[key].name} loaded`, 'fa-check');
         }
-    });
-
-    updateHUD(key);
+    }
 
     document.querySelectorAll('.model-card').forEach(c => {
         const cardKey = c.dataset.model;
@@ -408,10 +400,6 @@ function switchModel(key) {
     });
 
     resetViewToggle();
-
-    // Hide overlay after brief delay to allow rendering
-    setTimeout(() => hideTransitionOverlay(), 800);
-    showToast(`${CAR_DATA[key].name} loaded`, 'fa-check');
 }
 
 function setView(view) {
