@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tata Motors — 3D Car Explorer</title>
+    <meta name="description" content="Experience Tata Motors newest vehicles in stunning real-time 3D. Explore exterior and interior 360° views of Nexon EV, Safari, Punch, Sierra EV, and the Tiago/Tigor series.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="tata-logo-loader">
+                <svg viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <text x="5" y="32" font-family="Outfit" font-weight="800" font-size="36" fill="white">TATA</text>
+                </svg>
+            </div>
+            <div class="loading-bar-wrapper">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+            <p class="loading-text" id="loading-text">Initializing 3D Engine...</p>
+        </div>
+    </div>
+
+    <!-- App Shell -->
+    <div class="app-shell" id="app-shell">
+
+        <!-- ===== HEADER ===== -->
+        <header class="site-header" id="site-header">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <svg class="tata-svg" viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <text x="2" y="36" font-family="Outfit" font-weight="800" font-size="40" fill="white" letter-spacing="-1">TATA</text>
+                    </svg>
+                    <span class="brand-sub">MOTORS</span>
+                </div>
+            </div>
+            <nav class="header-nav" id="header-nav">
+                <a href="#" class="nav-item active" data-section="viewer">
+                    <i class="fas fa-cube"></i> 3D Explorer
+                </a>
+                <a href="#" class="nav-item" data-section="models">
+                    <i class="fas fa-car"></i> Models
+                </a>
+                <a href="#" class="nav-item" data-section="compare">
+                    <i class="fas fa-sliders-h"></i> Compare
+                </a>
+                <a href="#" class="nav-item" data-section="specs">
+                    <i class="fas fa-list-ul"></i> Specs
+                </a>
+            </nav>
+            <div class="header-right">
+                <button class="header-btn" id="fullscreen-btn" title="Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button class="hamburger-btn" id="hamburger-btn">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Mobile Nav -->
+        <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+            <nav class="mobile-nav" id="mobile-nav">
+                <button class="mobile-nav-close" id="mobile-nav-close"><i class="fas fa-times"></i></button>
+                <a href="#" class="mobile-nav-item active" data-section="viewer"><i class="fas fa-cube"></i> 3D Explorer</a>
+                <a href="#" class="mobile-nav-item" data-section="models"><i class="fas fa-car"></i> Models</a>
+                <a href="#" class="mobile-nav-item" data-section="compare"><i class="fas fa-sliders-h"></i> Compare</a>
+                <a href="#" class="mobile-nav-item" data-section="specs"><i class="fas fa-list-ul"></i> Specs</a>
+            </nav>
+        </div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main-content">
+
+            <!-- 3D VIEWER SECTION -->
+            <section class="viewer-section" id="viewer-section">
+
+                <!-- Viewport -->
+                <div class="viewport-wrapper">
+                    <div id="viewer-3d-container" style="width:100%;height:100%;position:relative;"></div>
+
+                    <!-- Car Name HUD -->
+                    <div class="car-name-hud" id="car-name-hud">
+                        <div class="hud-label">Currently Viewing</div>
+                        <h1 class="hud-car-name" id="hud-car-name">Nexon EV</h1>
+                        <div class="hud-tagline" id="hud-tagline">The Electric Leader</div>
+                    </div>
+
+                    <!-- View Toggle -->
+                    <div class="view-toggle-bar" id="view-toggle-bar">
+                        <button class="view-btn active" id="btn-exterior" data-view="exterior">
+                            <i class="fas fa-car-side"></i>
+                            <span>Exterior</span>
+                        </button>
+                        <div class="view-toggle-divider"></div>
+                        <button class="view-btn" id="btn-interior" data-view="interior">
+                            <i class="fas fa-couch"></i>
+                            <span>Interior</span>
+                        </button>
+                    </div>
+
+                    <!-- Floating Controls (right side) -->
+                    <div class="viewport-controls-panel" id="viewport-controls-panel">
+                        <button class="vp-btn" id="auto-rotate-btn" title="Auto Rotate">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="vp-btn" id="reset-cam-btn" title="Reset Camera">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button class="vp-btn" id="zoom-in-btn" title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button class="vp-btn" id="zoom-out-btn" title="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <div class="vp-divider"></div>
+                        <button class="vp-btn" id="specs-toggle-btn" title="Show Specs">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button class="vp-btn" id="color-panel-btn" title="Change Color">
+                            <i class="fas fa-palette"></i>
+                        </button>
+                    </div>
+
+                    <!-- Sketchfab Author Branding Blockers -->
+                    <div class="sketchfab-brand-blocker sketchfab-top-blocker"></div>
+
+                    <!-- Drag Hint -->
+                    <div class="drag-hint" id="drag-hint">
+                        <i class="fas fa-hand-pointer"></i>
+                        <span>Drag to rotate · Scroll to zoom</span>
+                    </div>
+
+                    <!-- View Label -->
+                    <div class="view-label" id="view-label">
+                        <i class="fas fa-rotate"></i>
+                        <span id="view-label-text">360° Exterior View</span>
+                    </div>
+
+                    <!-- Color Panel Popup -->
+                    <div class="color-panel-popup" id="color-panel-popup">
+                        <div class="color-panel-header">
+                            <h3>Paint Colors</h3>
+                            <button class="close-popup-btn" id="close-color-panel"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="color-swatches" id="color-swatches">
+                            <button class="swatch active" data-color="#1a1a2e" data-name="Midnight Black" style="background:#1a1a2e;"></button>
+                            <button class="swatch" data-color="#c0c0c0" data-name="Lunar Silver" style="background:#c0c0c0;"></button>
+                            <button class="swatch" data-color="#b22222" data-name="Crimson Red" style="background:#b22222;"></button>
+                            <button class="swatch" data-color="#1a3f8c" data-name="Atlas Blue" style="background:#1a3f8c;"></button>
+                            <button class="swatch" data-color="#2d5016" data-name="Pristine Green" style="background:#2d5016;"></button>
+                            <button class="swatch" data-color="#f5f5f5" data-name="Arctic White" style="background:#f5f5f5; border-color: #aaa;"></button>
+                            <button class="swatch" data-color="#c97b2e" data-name="Desert Gold" style="background:#c97b2e;"></button>
+                            <button class="swatch" data-color="#4a4a6a" data-name="Cosmic Purple" style="background:#4a4a6a;"></button>
+                        </div>
+                        <div class="color-name-display" id="color-name-display">Midnight Black</div>
+                        <div class="finish-row">
+                            <button class="finish-btn active" data-finish="metallic" id="finish-metallic">Metallic</button>
+                            <button class="finish-btn" data-finish="matte" id="finish-matte">Matte</button>
+                            <button class="finish-btn" data-finish="pearl" id="finish-pearl">Pearl</button>
+                        </div>
+                    </div>
+
+                    <!-- Specs Panel -->
+                    <div class="specs-panel" id="specs-panel">
+                        <div class="specs-panel-header">
+                            <h3 id="specs-car-name">Nexon EV</h3>
+                            <button class="close-popup-btn" id="close-specs-panel"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="specs-grid" id="specs-grid">
+                            <!-- Filled by JS -->
+                        </div>
+                        <div class="specs-price-row">
+                            <span class="specs-price-label">Starting Price</span>
+                            <span class="specs-price-value" id="specs-price">₹14.49 Lakh</span>
+                        </div>
+                        <a href="#" class="specs-cta-btn" id="specs-book-btn">Book a Test Drive <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <!-- Model Selector Bar -->
+                <div class="model-selector-bar">
+                    <button class="scroll-arrow scroll-left" id="models-scroll-left">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="models-scroll-track" id="models-scroll-track">
+                        <div class="models-inner" id="models-inner">
+
+                            <button class="model-card active" data-model="nexon" id="card-nexon">
+                                <div class="model-card-icon"><i class="fas fa-bolt"></i></div>
+                                <div class="model-card-info">
+                                    <span class="model-card-name">Nexon EV</span>
+                                    <span class="model-card-type">Electric SUV</span>
+                                </div>
+                                <div class="model-card-badge">EV</div>
+                            </button>
+
+                            <button class="model-card" data-model="safari" id="card-safari">
+                                <div class="model-card-icon"><i class="fas fa-mountain"></i></div>
+                                <div class="model-card-info">
+                                    <span class="model-card-name">Safari</span>
+                                    <span class="model-card-type">7-Seater SUV</span>
+                                </div>
+                            </button>
+
+                            <button class="model-card" data-model="punch_range" id="card-punch-range">
+                                <div class="model-card-icon"><i class="fas fa-fist-raised"></i></div>
+                                <div class="model-card-info">
+                                    <span class="model-card-name">Punch Range</span>
+                                    <span class="model-card-type">Micro SUV</span>
+                                </div>
+                            </button>
+
+                            <button class="model-card" data-model="sierra" id="card-sierra">
+                                <div class="model-card-icon"><i class="fas fa-star"></i></div>
+                                <div class="model-card-info">
+                                    <span class="model-card-name">Sierra EV</span>
+                                    <span class="model-card-type">Lifestyle SUV</span>
+                                </div>
+                                <div class="model-card-badge new-badge">2025</div>
+                            </button>
+
+                            <button class="model-card" data-model="tiago_tigor_range" id="card-tiago-tigor-range">
+                                <div class="model-card-icon"><i class="fas fa-car-side"></i></div>
+                                <div class="model-card-info">
+                                    <span class="model-card-name">Tiago & Tigor</span>
+                                    <span class="model-card-type">Hatchback & Sedan Collection</span>
+                                </div>
+                            </button>
+
+                        </div>
+                    </div>
+                    <button class="scroll-arrow scroll-right" id="models-scroll-right">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+            </section>
+
+            <!-- MODELS PAGE SECTION -->
+            <section class="page-section" id="models-section" style="display:none;">
+                <div class="section-header">
+                    <h2>Tata Motors Lineup <span class="year-badge">2025</span></h2>
+                    <p>Click any model to explore it in the 3D viewer</p>
+                </div>
+                <div class="models-grid-full" id="models-grid-full">
+                    <!-- Filled by JS -->
+                </div>
+            </section>
+
+            <!-- COMPARE SECTION -->
+            <section class="page-section" id="compare-section" style="display:none;">
+                <div class="section-header">
+                    <h2>Compare Models</h2>
+                    <p>Select two vehicles to compare their specs</p>
+                </div>
+                <div class="compare-container" id="compare-container">
+                    <div class="compare-slot" id="compare-slot-a">
+                        <div class="compare-slot-inner">
+                            <i class="fas fa-plus-circle"></i>
+                            <p>Select Vehicle A</p>
+                            <select class="compare-select" id="compare-select-a">
+                                <option value="">— Choose Model —</option>
+                                <option value="nexon">Nexon EV</option>
+                                <option value="safari">Safari</option>
+                                <option value="punch_standard">Punch (Standard Edition)</option>
+                                <option value="punch_creative">Punch (Creative Edition)</option>
+                                <option value="punch_tropical">Punch (Tropical Mist)</option>
+                                <option value="sierra">Sierra EV</option>
+                                <option value="tigor_modern">Tigor (Modern Edition)</option>
+                                <option value="tigor_2021">Tigor (2021 Edition)</option>
+                                <option value="tiago_hatchback">Tiago (Hatchback Edition)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="compare-vs">VS</div>
+                    <div class="compare-slot" id="compare-slot-b">
+                        <div class="compare-slot-inner">
+                            <i class="fas fa-plus-circle"></i>
+                            <p>Select Vehicle B</p>
+                            <select class="compare-select" id="compare-select-b">
+                                <option value="">— Choose Model —</option>
+                                <option value="nexon">Nexon EV</option>
+                                <option value="safari">Safari</option>
+                                <option value="punch_standard">Punch (Standard Edition)</option>
+                                <option value="punch_creative">Punch (Creative Edition)</option>
+                                <option value="punch_tropical">Punch (Tropical Mist)</option>
+                                <option value="sierra">Sierra EV</option>
+                                <option value="tigor_modern">Tigor (Modern Edition)</option>
+                                <option value="tigor_2021">Tigor (2021 Edition)</option>
+                                <option value="tiago_hatchback">Tiago (Hatchback Edition)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="compare-result" id="compare-result"></div>
+            </section>
+
+            <!-- SPECS SECTION (Full Page) -->
+            <section class="page-section" id="specs-section" style="display:none;">
+                <div class="section-header">
+                    <h2>Full Specifications</h2>
+                    <p>Detailed technical data for all models</p>
+                </div>
+                <div class="full-specs-container" id="full-specs-container">
+                    <!-- Filled by JS -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <span class="footer-tata">TATA</span>
+                    <span class="footer-motors">MOTORS</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Use</a>
+                    <a href="#">Contact</a>
+                    <a href="#">Dealers</a>
+                </div>
+                <p class="footer-copy">© 2025 Tata Motors Limited. 3D Explorer built with Three.js</p>
+            </div>
+        </footer>
+
+    </div><!-- /app-shell -->
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast-notification"></div>
+
+    <!-- Sketchfab-based 3D Viewer API -->
+    <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
